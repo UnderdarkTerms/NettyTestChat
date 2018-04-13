@@ -27,6 +27,7 @@ public class DiscardServer {
     }
 
     public void run() throws Exception {
+        // Merge complete
         EventLoopGroup bossGroup = new NioEventLoopGroup(); // (1)
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         DiscardServerHandler handler = new DiscardServerHandler();
