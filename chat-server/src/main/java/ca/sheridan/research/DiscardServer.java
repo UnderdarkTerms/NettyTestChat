@@ -1,5 +1,8 @@
 package ca.sheridan.research;
 
+import ca.sheridan.research.protocol.Packet;
+import ca.sheridan.research.protocol.PacketDecoder;
+import ca.sheridan.research.protocol.PacketEncoder;
 import io.netty.bootstrap.ServerBootstrap;
 
 import io.netty.buffer.ByteBuf;
@@ -7,6 +10,7 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.serialization.ObjectDecoder;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -32,6 +36,8 @@ public class DiscardServer {
                 .childHandler(new ChannelInitializer<SocketChannel>() { // (4)
                     @Override
                     public void initChannel(SocketChannel ch) throws Exception {
+                        ch.pipeline().addFirst(new PacketDecoder());
+                        ch.pipeline().addFirst(new PacketEncoder());
                         ch.pipeline().addLast(new DiscardServerHandler());
                     }
                 })
@@ -48,11 +54,7 @@ public class DiscardServer {
             BufferedReader r = new BufferedReader(new InputStreamReader(System.in));
             while(true) {
                 String msg = r.readLine();
-                ByteBuf buff;
-                buff = DiscardServerHandler.clientctx.alloc().buffer();
-                buff.writeInt(msg.getBytes().length);
-                buff.writeBytes(msg.getBytes());
-                DiscardServerHandler.clientctx.writeAndFlush(buff)
+                DiscardServerHandler.clientctx.writeAndFlush(new Packet("iisereb", msg))
                     .addListener((ChannelFutureListener) channelFuture ->
                         System.out.println("S> " + msg +
                             (channelFuture.isSuccess() ? "" : " (" + channelFuture.toString() + ")")
