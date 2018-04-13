@@ -29,6 +29,8 @@ public class DiscardServer {
     public void run() throws Exception {
         EventLoopGroup bossGroup = new NioEventLoopGroup(); // (1)
         EventLoopGroup workerGroup = new NioEventLoopGroup();
+        DiscardServerHandler handler = new DiscardServerHandler();
+
         try {
             ServerBootstrap b = new ServerBootstrap(); // (2)
             b.group(bossGroup, workerGroup)
@@ -38,29 +40,24 @@ public class DiscardServer {
                     public void initChannel(SocketChannel ch) throws Exception {
                         ch.pipeline().addFirst(new PacketDecoder());
                         ch.pipeline().addFirst(new PacketEncoder());
-                        ch.pipeline().addLast(new DiscardServerHandler());
+                        ch.pipeline().addLast(handler);
                     }
                 })
                 .option(ChannelOption.SO_BACKLOG, 128)          // (5)
                 .childOption(ChannelOption.SO_KEEPALIVE, true); // (6)
 
             // Bind and start to accept incoming connections.
-            ChannelFuture f = b.bind(port).sync(); // (7)
+            ChannelFuture f = b.bind(port).sync();
+
+            System.out.println("Server is up on port " + port);
+
 
             // Wait until the server socket is closed.
             // In this example, this does not happen, but you can do that to gracefully
             // shut down your server.
-            f.channel().closeFuture().addListener((ChannelFutureListener) channelFuture -> Runtime.getRuntime().halt(0));
-            BufferedReader r = new BufferedReader(new InputStreamReader(System.in));
-            while(true) {
-                String msg = r.readLine();
-                DiscardServerHandler.clientctx.writeAndFlush(new Packet("iisereb", msg))
-                    .addListener((ChannelFutureListener) channelFuture ->
-                        System.out.println("S> " + msg +
-                            (channelFuture.isSuccess() ? "" : " (" + channelFuture.toString() + ")")
-                ));
+            f.channel().closeFuture().sync();
 
-            }
+
         } finally {
             workerGroup.shutdownGracefully();
             bossGroup.shutdownGracefully();
