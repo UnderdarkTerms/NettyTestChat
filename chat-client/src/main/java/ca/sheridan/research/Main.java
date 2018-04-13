@@ -1,11 +1,15 @@
 package ca.sheridan.research;
 
+import ca.sheridan.research.protocol.Packet;
+import ca.sheridan.research.protocol.PacketDecoder;
+import ca.sheridan.research.protocol.PacketEncoder;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
@@ -13,6 +17,7 @@ import io.netty.handler.logging.LoggingHandler;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.List;
 
 public class Main {
     public static ChannelHandlerContext serverContext;
@@ -31,6 +36,10 @@ public class Main {
             b.handler(new ChannelInitializer<SocketChannel>() {
                 @Override
                 public void initChannel(SocketChannel ch) throws Exception {
+
+                    ch.pipeline().addFirst(new PacketDecoder());
+                    ch.pipeline().addFirst(new PacketEncoder());
+
                     ch.pipeline().addLast(new ChannelInboundHandler() {
                         @Override
                         public void channelRegistered(ChannelHandlerContext channelHandlerContext) throws Exception {
@@ -55,10 +64,11 @@ public class Main {
 
                         @Override
                         public void channelRead(ChannelHandlerContext channelHandlerContext, Object o) throws Exception {
-                            ByteBuf buf = ((ByteBuf) o);
-                            byte[] msg = new byte[buf.readInt()];
-                            buf.readBytes(msg);
-                            System.out.println("S> " + new String(msg, "UTF-8"));
+                            if (!(o instanceof Packet)) {
+                                System.out.println("Unknown packet: " + o);
+                                return;
+                            }
+                            System.out.printf("%s> %s\r\n", ((Packet) o).getUsername(), ((Packet) o).getMessage());
                         }
 
                         @Override
@@ -92,15 +102,7 @@ public class Main {
                         }
                     });
 
-                    ch.pipeline().addFirst(new MessageToByteEncoder<String>() {
-                        @Override
-                        protected void encode(ChannelHandlerContext channelHandlerContext, String s, ByteBuf byteBuf) throws Exception {
-                            byte[] bytes = s.getBytes("UTF-8");
-                            byteBuf.writeInt(bytes.length);
-                            byteBuf.writeBytes(bytes);
-                        }
-                    });
-                    ch.pipeline().addLast(new LoggingHandler(LogLevel.INFO));
+
                 }
             });
 
@@ -115,17 +117,13 @@ public class Main {
 
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+            String username = "UnderdarkTerms";
             while (true) {
                 String msg = reader.readLine();
-                ByteBuf buf = serverContext.alloc().buffer();
-                buf.writeInt(msg.getBytes().length);
-                buf.writeBytes(msg.getBytes());
-                serverContext.writeAndFlush(msg).addListener(new ChannelFutureListener() {
-                    @Override
-                    public void operationComplete(ChannelFuture channelFuture) throws Exception {
-                        System.out.println("C> " + msg + (!channelFuture.isSuccess() ? (" (" + channelFuture + ")") : ""));
-                    }
-                });
+
+
+                serverContext.writeAndFlush(new Packet(username, username))
+                        .addListener((ChannelFutureListener) channelFuture -> System.out.println("C> " + msg + (!channelFuture.isSuccess() ? (" (" + channelFuture + ")") : "")));
             }
         } finally {
             workerGroup.shutdownGracefully();
