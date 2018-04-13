@@ -44,12 +44,7 @@ public class DiscardServer {
             // Wait until the server socket is closed.
             // In this example, this does not happen, but you can do that to gracefully
             // shut down your server.
-            f.channel().closeFuture().addListener(new ChannelFutureListener() {
-                @Override
-                public void operationComplete(ChannelFuture channelFuture) throws Exception {
-                    Runtime.getRuntime().halt(0);
-                }
-            });
+            f.channel().closeFuture().addListener((ChannelFutureListener) channelFuture -> Runtime.getRuntime().halt(0));
             BufferedReader r = new BufferedReader(new InputStreamReader(System.in));
             while(true) {
                 String msg = r.readLine();
@@ -57,14 +52,11 @@ public class DiscardServer {
                 buff = DiscardServerHandler.clientctx.alloc().buffer();
                 buff.writeInt(msg.getBytes().length);
                 buff.writeBytes(msg.getBytes());
-                DiscardServerHandler.clientctx.writeAndFlush(buff).addListener(new ChannelFutureListener() {
-                    @Override
-                    public void operationComplete(ChannelFuture channelFuture) throws Exception {
-                        System.out.println(
-                            "S> " + msg + (channelFuture.isSuccess() ? "" : " (" + channelFuture.toString() + ")")
-                        );
-                    }
-                });
+                DiscardServerHandler.clientctx.writeAndFlush(buff)
+                    .addListener((ChannelFutureListener) channelFuture ->
+                        System.out.println("S> " + msg +
+                            (channelFuture.isSuccess() ? "" : " (" + channelFuture.toString() + ")")
+                ));
 
             }
         } finally {
