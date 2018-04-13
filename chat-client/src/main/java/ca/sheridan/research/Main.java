@@ -18,13 +18,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.Random;
 
 public class Main {
     public static ChannelHandlerContext serverContext;
 
 
     public static void main(String[] args) throws InterruptedException, IOException {
-        String host = "localhost";
+        String host = "10.48.33.108";
         int port = 8080;
         EventLoopGroup workerGroup = new NioEventLoopGroup();
 
@@ -117,13 +118,17 @@ public class Main {
 
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-            String username = "UnderdarkTerms";
+            Random random = new Random();
+            String username = "" + random.nextInt();
             while (true) {
                 String msg = reader.readLine();
 
 
-                serverContext.writeAndFlush(new Packet(username, username))
-                        .addListener((ChannelFutureListener) channelFuture -> System.out.println("C> " + msg + (!channelFuture.isSuccess() ? (" (" + channelFuture + ")") : "")));
+                serverContext.writeAndFlush(new Packet(username, msg))
+                        .addListener((ChannelFutureListener) channelFuture -> {
+                            if (!channelFuture.isSuccess())
+                                System.err.println("Unable to send message: " + channelFuture.toString());
+                        });
             }
         } finally {
             workerGroup.shutdownGracefully();
