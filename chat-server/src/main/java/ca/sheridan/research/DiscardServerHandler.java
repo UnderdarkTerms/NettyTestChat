@@ -10,16 +10,20 @@ import io.netty.util.concurrent.GlobalEventExecutor;
 
 @ChannelHandler.Sharable
 public class DiscardServerHandler extends ChannelInboundHandlerAdapter {
-
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     private ChannelGroup clients = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         // Discard the received data silently.
         Packet packet = (Packet) msg;
+        if (packet.getUsername().isEmpty()
+                || packet.getMessage().isEmpty()) {
+            System.err.println("Dropped incorrect packet: {username: " + packet.getMessage() + "; " + packet.getMessage() + "}");
+            return;
+        }
         clients.writeAndFlush(packet);
         System.out.println(packet.getUsername() + "> " + packet.getMessage());
-
     }
 
     @Override
@@ -30,13 +34,14 @@ public class DiscardServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("channelActive");
+        System.out.println("Client connected: " + ctx.channel().remoteAddress());
         super.channelActive(ctx);
         clients.add(ctx.channel());
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        System.out.println("Client disconnected: " + ctx.channel().remoteAddress());
         clients.remove(ctx.channel());
         super.channelInactive(ctx);
     }
