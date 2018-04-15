@@ -1,7 +1,6 @@
 package ca.sheridan.research;
 
 import ca.sheridan.research.protocol.Packet;
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -9,37 +8,39 @@ import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.util.concurrent.GlobalEventExecutor;
 
-import java.io.UnsupportedEncodingException;
-
 @ChannelHandler.Sharable
-public class DiscardServerHandler extends ChannelInboundHandlerAdapter {
-
+public class ChatServerHandler extends ChannelInboundHandlerAdapter {
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     private ChannelGroup clients = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws UnsupportedEncodingException {
-        // Discard the received data silently.
+    public void channelRead(ChannelHandlerContext ctx, Object msg) {
         Packet packet = (Packet) msg;
+        if (packet.getUsername().isEmpty()
+                || packet.getMessage().isEmpty()) {
+            System.err.println("Dropped incorrect packet: {username: " + packet.getMessage() + "; " + packet.getMessage() + "}");
+            return;
+        }
         clients.writeAndFlush(packet);
         System.out.println(packet.getUsername() + "> " + packet.getMessage());
-
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) { // (4)
-        System.err.println("Disconneced: " + cause.getMessage());
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) { 
+        System.err.println("Disconnected: " + cause.getMessage());
         ctx.close();
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("channelActive");
+        System.out.println("Client connected: " + ctx.channel().remoteAddress());
         super.channelActive(ctx);
         clients.add(ctx.channel());
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        System.out.println("Client disconnected: " + ctx.channel().remoteAddress());
         clients.remove(ctx.channel());
         super.channelInactive(ctx);
     }
