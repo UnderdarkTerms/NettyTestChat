@@ -1,7 +1,6 @@
 package ca.sheridan.research;
 
 import ca.sheridan.research.protocol.Packet;
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -9,15 +8,13 @@ import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.util.concurrent.GlobalEventExecutor;
 
-import java.io.UnsupportedEncodingException;
-
 @ChannelHandler.Sharable
 public class DiscardServerHandler extends ChannelInboundHandlerAdapter {
 
     private ChannelGroup clients = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws UnsupportedEncodingException {
+    public void channelRead(ChannelHandlerContext ctx, Object msg) {
         // Discard the received data silently.
         Packet packet = (Packet) msg;
         clients.writeAndFlush(packet);
@@ -27,7 +24,7 @@ public class DiscardServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) { // (4)
-        System.err.println("Disconneced: " + cause.getMessage());
+        System.err.println("Disconnected: " + cause.getMessage());
         ctx.close();
     }
 
