@@ -9,7 +9,7 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.util.concurrent.GlobalEventExecutor;
 
 @ChannelHandler.Sharable
-public class DiscardServerHandler extends ChannelInboundHandlerAdapter {
+public class ChatServerHandler extends ChannelInboundHandlerAdapter {
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     private ChannelGroup clients = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 

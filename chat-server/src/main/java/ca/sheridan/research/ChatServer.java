@@ -11,10 +11,10 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 
-public class DiscardServer {
+public class ChatServer {
     private int port;
 
-    public DiscardServer(int port) {
+    public ChatServer(int port) {
         this.port = port;
     }
 
@@ -25,13 +25,13 @@ public class DiscardServer {
         } else {
             port = 8080;
         }
-        new DiscardServer(port).run();
+        new ChatServer(port).run();
     }
 
     public void run() throws Exception {
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
-        DiscardServerHandler handler = new DiscardServerHandler();
+        ChatServerHandler handler = new ChatServerHandler();
 
         try {
             ServerBootstrap b = new ServerBootstrap();
