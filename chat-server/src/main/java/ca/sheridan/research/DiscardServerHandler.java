@@ -15,7 +15,6 @@ public class DiscardServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
-        // Discard the received data silently.
         Packet packet = (Packet) msg;
         if (packet.getUsername().isEmpty()
                 || packet.getMessage().isEmpty()) {
@@ -27,7 +26,7 @@ public class DiscardServerHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) { // (4)
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) { 
         System.err.println("Disconnected: " + cause.getMessage());
         ctx.close();
     }
