@@ -24,7 +24,6 @@ public class AuthWindow extends Application {
         launch(args);
     }
 
-
     @Override
     public void start(Stage primaryStage) {
         GridPane pane = new GridPane();
@@ -65,10 +64,36 @@ public class AuthWindow extends Application {
         primaryStage.show();
 
         connect.setOnAction(event -> connect(primaryStage, ip, port, username));
-
     }
 
-    private void connect(Stage primaryStage, TextField ip, TextField port, TextField username) {
+    private void connect(Stage primaryStage, TextField ipText, TextField portText, TextField usernameText) {
+        int port;
+        try {
+            port = Integer.valueOf(portText.getText());
+        } catch (Exception ex) {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Invalid connection details");
+            alert.setContentText("Please, enter correct server port.");
+            alert.showAndWait();
+            return;
+        }
+
+        if (usernameText.getText().isEmpty()) {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Invalid connection details");
+            alert.setContentText("Please, enter correct username.");
+            alert.showAndWait();
+            return;
+        }
+
+        if (ipText.getText().isEmpty()) {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Invalid connection details");
+            alert.setContentText("Please, enter correct IP-address.");
+            alert.showAndWait();
+            return;
+        }
+
         EventLoopGroup workerGroup = new NioEventLoopGroup();
 
         Bootstrap b = new Bootstrap();
@@ -86,16 +111,14 @@ public class AuthWindow extends Application {
         });
 
 
-        ChannelFuture futureMain = b.connect(ip.getText(), Integer.valueOf(port.getText()));
+        ChannelFuture futureMain = b.connect(ipText.getText(), port);
         try {
             futureMain.addListener(future -> Platform.runLater(() -> {
                 if (future.isSuccess()) {
-
                     ChatWindow chatWindow = new ChatWindow();
-                    chatWindow.start(username.getText(), handler);
+                    chatWindow.start(usernameText.getText(), handler);
                     primaryStage.hide();
                     futureMain.channel().closeFuture().addListener((ChannelFutureListener) future1 -> Platform.runLater(chatWindow::close));
-
                 } else {
                     Alert alert = new Alert(Alert.AlertType.ERROR);
                     alert.setTitle("Unable to connect");

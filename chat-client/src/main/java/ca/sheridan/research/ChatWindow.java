@@ -29,8 +29,10 @@ public class ChatWindow {
         TextField input = new TextField();
         Button send = new Button("Send");
         EventHandler<ActionEvent> eventHandler = event -> {
-            handler.getCtx().writeAndFlush(new Packet(userName, input.getText()));
-            input.setText("");
+            if (!input.getText().isEmpty()) {
+                handler.getCtx().writeAndFlush(new Packet(userName, input.getText()));
+                input.setText("");
+            }
         };
         send.setOnAction(eventHandler);
         input.setOnAction(eventHandler);
