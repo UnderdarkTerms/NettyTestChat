@@ -7,6 +7,7 @@
     <groupId>ca.sheridan.research</groupId>
     <artifactId>chat-parent</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
 
     <properties>
         <protocol.version>1.0-SNAPSHOT</protocol.version>
