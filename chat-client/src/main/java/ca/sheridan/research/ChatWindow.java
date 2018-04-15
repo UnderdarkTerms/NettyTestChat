@@ -1,8 +1,6 @@
 package ca.sheridan.research;
 
 import ca.sheridan.research.protocol.Packet;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
@@ -14,15 +12,15 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class ChatWindow {
-    ObservableList<String> items;
+    private Stage primaryStage = new Stage();
 
-    public void start(Stage primaryStage, String userName) throws Exception {
+    public void start(String userName, ChannelHandler handler) {
         VBox pane = new VBox();
         Scene scene = new Scene(pane, 600, 600);
 
         ListView<String> history = new ListView<>();
 
-        history.setItems(AuthWindow.messages);
+        history.setItems(handler.getMessages());
         history.setPrefWidth(Double.MAX_VALUE);
         pane.getChildren().add(history);
 
@@ -30,12 +28,12 @@ public class ChatWindow {
 
         TextField input = new TextField();
         Button send = new Button("Send");
-        EventHandler<ActionEvent> handler = event -> {
-            AuthWindow.ctx.writeAndFlush(new Packet(userName, input.getText()));
+        EventHandler<ActionEvent> eventHandler = event -> {
+            handler.getCtx().writeAndFlush(new Packet(userName, input.getText()));
             input.setText("");
         };
-        send.setOnAction(handler);
-        input.setOnAction(handler);
+        send.setOnAction(eventHandler);
+        input.setOnAction(eventHandler);
         send.setPrefWidth(100);
         input.prefWidthProperty().bind(scene.widthProperty().subtract(send.prefWidthProperty()));
 
@@ -49,5 +47,10 @@ public class ChatWindow {
         primaryStage.setScene(scene);
         primaryStage.setTitle("Chat Window");
         primaryStage.show();
+    }
+
+    public void close() {
+        System.out.println("Close Request");
+        primaryStage.close();
     }
 }
